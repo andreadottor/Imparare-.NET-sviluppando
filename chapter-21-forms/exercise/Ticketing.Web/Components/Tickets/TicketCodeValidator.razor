@@ -1,0 +1,76 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using Ticketing.Application.Services
+@implements IDisposable
+@inject TicketService TicketService
+
+@code {
+    private ValidationMessageStore? messages;
+
+    [CascadingParameter]
+    private EditContext? CurrentEditContext { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public TicketFormModel Model { get; set; } = default!;
+
+    [Parameter]
+    public bool IsEditing { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ArgumentNullException.ThrowIfNull(CurrentEditContext);
+
+        messages = new ValidationMessageStore(CurrentEditContext);
+        CurrentEditContext.OnValidationRequested += HandleValidationRequested;
+        CurrentEditContext.OnFieldChanged += HandleFieldChanged;
+    }
+
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs eventArgs)
+    {
+        eventArgs.AddAsyncValidator(ValidateCodeAsync);
+    }
+
+    private void HandleFieldChanged(object? sender, FieldChangedEventArgs eventArgs)
+    {
+        FieldIdentifier field = CurrentEditContext!.Field(nameof(TicketFormModel.Code));
+
+        if (!eventArgs.FieldIdentifier.Equals(field))
+        {
+            return;
+        }
+
+        CurrentEditContext.RegisterAsyncFieldValidator(field, ValidateCodeAsync);
+    }
+
+    private async Task ValidateCodeAsync(CancellationToken ct)
+    {
+        FieldIdentifier field = CurrentEditContext!.Field(nameof(TicketFormModel.Code));
+
+        messages!.Clear(field);
+        CurrentEditContext.NotifyValidationStateChanged();
+
+        if (!IsEditing && !string.IsNullOrWhiteSpace(Model.Code))
+        {
+            string code = Model.Code.Trim();
+            await Task.Delay(TimeSpan.FromSeconds(2), ct);
+            bool alreadyExists = await TicketService.FindAsync(code, ct) is not null;
+            ct.ThrowIfCancellationRequested();
+
+            if (alreadyExists)
+            {
+                messages.Add(field, $"Ticket {code} already exists.");
+            }
+        }
+
+        CurrentEditContext.NotifyValidationStateChanged();
+    }
+
+    public void Dispose()
+    {
+        if (CurrentEditContext is not null)
+        {
+            CurrentEditContext.OnValidationRequested -= HandleValidationRequested;
+            CurrentEditContext.OnFieldChanged -= HandleFieldChanged;
+        }
+    }
+}

@@ -1,0 +1,143 @@
+@baseUrl=https://localhost:7142
+@ticketCode=INC-COUNT-A7F93D2E
+
+# Ottenere tutti i ticket
+GET {{baseUrl}}/api/tickets
+Accept: application/json
+
+###
+
+# Ottenere un ticket
+GET {{baseUrl}}/api/tickets/INC-001
+Accept: application/json
+
+###
+
+# Creare un ticket
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+Accept: application/json
+
+{
+  "code": "INC-001",
+  "title": "Portale non disponibile",
+  "description": "Gli utenti non riescono ad accedere.",
+  "priority": 1,
+  "affectedService": "Customer Portal"
+}
+
+###
+
+# Cancellare un ticket
+DELETE {{baseUrl}}/api/tickets/INC-001
+
+###
+
+# 1. Leggere il conteggio iniziale (200 OK) e annotarlo come N.
+# Eseguire la sequenza in ordine, senza altre modifiche ai ticket.
+# Il codice ticketCode deve essere assente prima di iniziare.
+GET {{baseUrl}}/api/tickets/stats/count
+Accept: application/json
+
+###
+
+# 2. Creare un nuovo ticket: atteso 201 Created.
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+Accept: application/json
+
+{
+  "code": "{{ticketCode}}",
+  "title": "Verifica conteggio ticket",
+  "description": "Ticket temporaneo per verificare il conteggio.",
+  "priority": 1,
+  "affectedService": "Customer Portal"
+}
+
+###
+
+# 3. Verificare 200 OK e count = N + 1.
+GET {{baseUrl}}/api/tickets/stats/count
+Accept: application/json
+
+###
+
+# 4. Creare nuovamente lo stesso ticket: atteso 409 Conflict.
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+Accept: application/json
+
+{
+  "code": "{{ticketCode}}",
+  "title": "Verifica conteggio ticket",
+  "description": "Ticket temporaneo per verificare il conteggio.",
+  "priority": 1,
+  "affectedService": "Customer Portal"
+}
+
+###
+
+# 5. Verificare 200 OK e count = N + 1 dopo il tentativo duplicato.
+GET {{baseUrl}}/api/tickets/stats/count
+Accept: application/json
+
+###
+
+# 6. Inviare un body non valido: atteso 400 Bad Request.
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+Accept: application/json
+
+{
+  "code": "{{ticketCode}}-INVALID",
+  "title": "",
+  "description": "",
+  "priority": 0,
+  "affectedService": ""
+}
+
+###
+
+# 7. Verificare 200 OK e count = N + 1 dopo il body non valido.
+GET {{baseUrl}}/api/tickets/stats/count
+Accept: application/json
+
+###
+
+# 8. Cancellare il ticket appena creato: atteso 204 No Content.
+DELETE {{baseUrl}}/api/tickets/{{ticketCode}}
+
+###
+
+# 9. Verificare 200 OK e count = N (valore iniziale).
+GET {{baseUrl}}/api/tickets/stats/count
+Accept: application/json
+
+###
+
+GET {{baseUrl}}/api/tickets/stats/count
+
+###
+
+GET {{baseUrl}}/api/tickets/INC-001
+
+### Codice valido uguale al nome dell'operazione di conteggio: atteso 201.
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+
+{
+  "code": "count",
+  "title": "Verifica route",
+  "description": "Il codice count deve essere recuperabile.",
+  "priority": 2,
+  "affectedService": "Portal"
+}
+
+### Restituisce il ticket, non il conteggio: atteso 200 con code = count.
+GET {{baseUrl}}/api/tickets/count
+
+### Restituisce il conteggio: atteso 200 con la proprietà count.
+GET {{baseUrl}}/api/tickets/stats/count
+
+### Pulizia del ticket di prova: atteso 204.
+DELETE {{baseUrl}}/api/tickets/count

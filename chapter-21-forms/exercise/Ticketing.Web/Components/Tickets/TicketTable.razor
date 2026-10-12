@@ -1,0 +1,71 @@
+@using Ticketing.Application.Tickets
+
+<div class="table-responsive ticket-table-container" tabindex="0">
+    <table class="table table-striped align-middle">
+        <thead class="sticky-top bg-body">
+            <tr>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Title</th>
+                <th>Priority</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <Virtualize Items="Tickets"
+                        Context="ticket"
+                        ItemSize="53"
+                        OverscanCount="15"
+                        SpacerElement="tr">
+                <ItemContent>
+                    <tr @key="ticket.Code">
+                        <td>@ticket.Code</td>
+                        <td>@ticket.TypeName</td>
+                        <td class="ticket-title">@ticket.Title</td>
+                        <td>@ticket.Priority</td>
+                        <td>
+                            @ticket.CreatedAt.LocalDateTime.ToString("g")
+                        </td>
+                        <td class="text-end">
+                            <NavLink class="btn btn-sm btn-outline-primary me-2"
+                                     href="@($"tickets/{ticket.Code}/edit")">
+                                Edit
+                            </NavLink>
+
+                            <button class="btn btn-sm btn-outline-danger"
+                                    disabled="@IsBusy"
+                                    @onclick="() => RequestDeleteAsync(ticket.Code)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                </ItemContent>
+                <EmptyContent>
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            No tickets found.
+                        </td>
+                    </tr>
+                </EmptyContent>
+            </Virtualize>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public ICollection<Ticket> Tickets { get; set; } = [];
+
+    [Parameter]
+    public bool IsBusy { get; set; }
+
+    [Parameter]
+    public EventCallback<string> DeleteRequested { get; set; }
+
+    private Task RequestDeleteAsync(string code)
+    {
+        return DeleteRequested.InvokeAsync(code);
+    }
+}

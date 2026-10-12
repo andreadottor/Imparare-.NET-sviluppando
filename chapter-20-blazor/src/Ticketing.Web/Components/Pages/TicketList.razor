@@ -1,0 +1,158 @@
+@page "/tickets"
+@using Ticketing.Application.Services
+@using Ticketing.Application.Tickets
+@inject TicketService TicketService
+@inject ILogger<TicketList> Logger
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Tickets</PageTitle>
+
+<h1>Tickets</h1>
+
+@if (errorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+
+@if (isLoading)
+{
+    <p><em>Loading tickets...</em></p>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label" for="ticket-filter">
+                Filter
+            </label>
+            <input id="ticket-filter"
+                   class="form-control"
+                   placeholder="Code or title"
+                   @bind="filterText"
+                   @bind:event="oninput" />
+        </div>
+    </div>
+
+    <p>@VisibleTickets.Count ticket(s) found.</p>
+
+    <TicketTable Tickets="VisibleTickets"
+                 IsBusy="isBusy"
+                 DeleteRequested="DeleteTicketAsync" />
+}
+
+@code {
+    private readonly CancellationTokenSource cancellationTokenSource = new();
+    private ICollection<Ticket> tickets = [];
+    private bool isLoading = true;
+    private bool isBusy;
+    private string filterText = string.Empty;
+    private string? errorMessage;
+
+    private ICollection<Ticket> VisibleTickets
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(filterText))
+            {
+                return tickets;
+            }
+
+            return tickets
+                .Where(ticket =>
+                    ticket.Code.Contains(
+                        filterText,
+                        StringComparison.OrdinalIgnoreCase)
+                    || ticket.Title.Contains(
+                        filterText,
+                        StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTicketsAsync(cancellationTokenSource.Token);
+    }
+
+    private async Task LoadTicketsAsync(CancellationToken ct)
+    {
+        try
+        {
+            IReadOnlyCollection<Ticket> loadedTickets = await TicketService.GetAllAsync(ct);
+
+            tickets = loadedTickets.ToArray();
+        }
+        catch (OperationCanceledException)
+            when (ct.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Unable to load tickets");
+            errorMessage = "Unable to load tickets.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task DeleteTicketAsync(string code)
+    {
+        if (isBusy)
+        {
+            return;
+        }
+
+        isBusy = true;
+        errorMessage = null;
+
+        try
+        {
+            bool confirmed = await JS.InvokeAsync<bool>(
+                "confirm",
+                $"Delete ticket {code}?");
+
+            if (!confirmed)
+            {
+                return;
+            }
+
+            bool deleted = await TicketService.DeleteAsync(
+                code,
+                cancellationTokenSource.Token);
+
+            if (!deleted)
+            {
+                errorMessage = $"Ticket {code} was not found.";
+                return;
+            }
+
+            tickets = tickets
+                .Where(ticket => ticket.Code != code)
+                .ToArray();
+        }
+        catch (OperationCanceledException)
+            when (cancellationTokenSource.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Unable to delete ticket {TicketCode}", code);
+            errorMessage = $"Unable to delete ticket {code}.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        cancellationTokenSource.Cancel();
+        cancellationTokenSource.Dispose();
+    }
+}

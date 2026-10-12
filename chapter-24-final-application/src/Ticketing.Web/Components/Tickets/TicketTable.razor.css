@@ -1,0 +1,10 @@
+﻿.ticket-table-container {
+    height: 32rem;
+    overflow-y: auto;
+}
+
+.ticket-title {
+    max-width: 20rem;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}

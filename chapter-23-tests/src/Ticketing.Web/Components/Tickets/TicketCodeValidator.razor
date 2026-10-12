@@ -1,0 +1,60 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using Ticketing.Application.Services
+@implements IDisposable
+@inject TicketService TicketService
+
+@code {
+    private ValidationMessageStore? messages;
+
+    [CascadingParameter]
+    private EditContext? CurrentEditContext { get; set; }
+
+    [Parameter]
+    [EditorRequired]
+    public TicketFormModel Model { get; set; } = default!;
+
+    [Parameter]
+    public bool IsEditing { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ArgumentNullException.ThrowIfNull(CurrentEditContext);
+
+        messages = new ValidationMessageStore(CurrentEditContext);
+        CurrentEditContext.OnValidationRequested += HandleValidationRequested;
+    }
+
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs eventArgs)
+    {
+        eventArgs.AddAsyncValidator(ValidateCodeAsync);
+    }
+
+    private async Task ValidateCodeAsync(CancellationToken ct)
+    {
+        FieldIdentifier field = CurrentEditContext!.Field(nameof(TicketFormModel.Code));
+
+        messages!.Clear(field);
+
+        if (!IsEditing && !string.IsNullOrWhiteSpace(Model.Code))
+        {
+            string code = Model.Code.Trim();
+            bool alreadyExists = await TicketService.FindAsync(code, ct) is not null;
+
+            if (alreadyExists)
+            {
+                messages.Add(field, $"Ticket {code} already exists.");
+            }
+        }
+
+        CurrentEditContext.NotifyValidationStateChanged();
+    }
+
+    public void Dispose()
+    {
+        if (CurrentEditContext is not null)
+        {
+            CurrentEditContext.OnValidationRequested -=
+                HandleValidationRequested;
+        }
+    }
+}

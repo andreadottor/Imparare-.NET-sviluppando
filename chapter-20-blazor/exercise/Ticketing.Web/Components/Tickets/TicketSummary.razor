@@ -1,0 +1,23 @@
+@using Ticketing.Application.Tickets
+
+<dl class="row mb-3">
+    <dt class="col-sm-3">Total tickets</dt>
+    <dd class="col-sm-9">@Tickets.Count</dd>
+    <dt class="col-sm-3">High priority tickets</dt>
+    <dd class="col-sm-9">@HighPriorityCount</dd>
+    @if (LatestCreatedAt is { } latestCreatedAt)
+    {
+        <dt class="col-sm-3">Most recent ticket</dt>
+        <dd class="col-sm-9">@latestCreatedAt.LocalDateTime.ToString("g")</dd>
+    }
+</dl>
+
+@code {
+    [Parameter]
+    [EditorRequired]
+    public ICollection<Ticket> Tickets { get; set; } = [];
+
+    private int HighPriorityCount => Tickets.Count(ticket => ticket.Priority == 1);
+
+    private DateTimeOffset? LatestCreatedAt => Tickets.Max(ticket => (DateTimeOffset?)ticket.CreatedAt);
+}

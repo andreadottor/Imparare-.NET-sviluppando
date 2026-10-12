@@ -1,0 +1,270 @@
+@page "/tickets/new"
+@page "/tickets/{Code}/edit"
+@using Ticketing.Application.Services
+@using Ticketing.Application.Tickets
+@using Ticketing.Web.Components.Tickets
+@inject TicketService TicketService
+@inject NavigationManager Navigation
+@inject ILogger<TicketEdit> Logger
+@implements IDisposable
+
+<PageTitle>@PageTitleText</PageTitle>
+
+<h1>@PageTitleText</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading ticket...</em></p>
+}
+else if (notFound)
+{
+    <div class="alert alert-warning" role="alert">
+        Ticket @Code was not found.
+    </div>
+
+    <a class="btn btn-secondary" href="/tickets">Back to tickets</a>
+}
+else if (editContext is null && errorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+    <a class="btn btn-secondary" href="/tickets">Back to tickets</a>
+}
+else if (editContext is not null)
+{
+    @if (errorMessage is not null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @errorMessage
+        </div>
+    }
+
+    <EditForm EditContext="editContext" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <TicketCodeValidator Model="model" IsEditing="IsEditing" />
+
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label" for="ticket-code">Code</label>
+            <InputText id="ticket-code"
+            class="form-control"
+            @bind-Value="model.Code"
+            disabled="@IsEditing" />
+            <ValidationMessage For="() => model.Code" />
+
+            @if (editContext.IsValidationPending(() => model.Code))
+            {
+                <span aria-live="polite">Checking code...</span>
+            }
+            else if (editContext.IsValidationFaulted(() => model.Code))
+            {
+                <span class="text-danger" aria-live="polite">
+                    Code validation could not be completed.
+                </span>
+            }
+
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="ticket-title">Title</label>
+            <InputText id="ticket-title"
+            class="form-control"
+            @bind-Value="model.Title" />
+            <ValidationMessage For="() => model.Title" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="ticket-description">
+                Description
+            </label>
+            <InputTextArea id="ticket-description"
+            class="form-control"
+            rows="5"
+            @bind-Value="model.Description" />
+            <ValidationMessage For="() => model.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="ticket-priority">Priority</label>
+            <PrioritySelector id="ticket-priority"
+            @bind-Value="model.Priority" />
+            <ValidationMessage For="() => model.Priority" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="ticket-service">
+                Affected service
+            </label>
+            <InputText id="ticket-service"
+            class="form-control"
+            @bind-Value="model.AffectedService" />
+            <ValidationMessage For="() => model.AffectedService" />
+        </div>
+
+        <button class="btn btn-primary"
+        type="submit"
+        disabled="@isBusy">
+            @(isBusy ? "Saving..." : "Save")
+        </button>
+
+        <a class="btn btn-secondary ms-2" href="/tickets">Cancel</a>
+    </EditForm>
+}
+
+@code {
+    private readonly CancellationTokenSource cancellationTokenSource = new();
+    private TicketFormModel model = new();
+    private EditContext? editContext;
+    private IncidentTicket? originalTicket;
+    private bool isLoading = true;
+    private bool isBusy;
+    private bool notFound;
+    private string? errorMessage;
+
+    [Parameter]
+    public string? Code { get; set; }
+
+    private bool IsEditing => !string.IsNullOrWhiteSpace(Code);
+
+    private string PageTitleText => IsEditing ? $"Edit ticket {Code}" : "New ticket";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        notFound = false;
+        errorMessage = null;
+
+        try
+        {
+            if (!IsEditing)
+            {
+                model = new TicketFormModel();
+                editContext = new EditContext(model);
+                originalTicket = null;
+                return;
+            }
+
+            Ticket? ticket = await TicketService.FindAsync(
+            Code!,
+            cancellationTokenSource.Token);
+
+            if (ticket is not IncidentTicket incident)
+            {
+                notFound = true;
+                editContext = null;
+                return;
+            }
+
+            originalTicket = incident;
+            model = new TicketFormModel
+            {
+                Code = incident.Code,
+                Title = incident.Title,
+                Description = incident.Description,
+                Priority = incident.Priority,
+                AffectedService = incident.AffectedService
+            };
+
+            editContext = new EditContext(model);
+        }
+        catch (OperationCanceledException)
+            when (cancellationTokenSource.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unable to load ticket {TicketCode}",
+                Code);
+
+            editContext = null;
+            errorMessage = "Unable to load the ticket.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (isBusy)
+        {
+            return;
+        }
+
+        isBusy = true;
+        errorMessage = null;
+
+        try
+        {
+            string code = IsEditing ? originalTicket!.Code : model.Code;
+            DateTimeOffset createdAt =
+                IsEditing ? originalTicket!.CreatedAt : DateTimeOffset.UtcNow;
+
+            var ticket = new IncidentTicket(
+                code,
+                model.Title,
+                model.Description,
+                model.Priority,
+                createdAt,
+                model.AffectedService);
+
+            if (IsEditing)
+            {
+                bool updated = await TicketService.UpdateAsync(
+                ticket,
+                cancellationTokenSource.Token);
+
+                if (!updated)
+                {
+                    errorMessage = $"Ticket {code} was not found.";
+                    return;
+                }
+            }
+            else
+            {
+                await TicketService.RegisterAsync(ticket);
+            }
+
+            Navigation.NavigateTo("/tickets");
+        }
+        catch (DuplicateTicketException)
+        {
+            errorMessage = $"Ticket {model.Code} already exists.";
+        }
+        catch (ArgumentException exception)
+        {
+            Logger.LogWarning(
+                exception,
+                "Invalid values while saving ticket {TicketCode}",
+                model.Code);
+
+            errorMessage = "The ticket contains invalid values.";
+        }
+        catch (OperationCanceledException)
+            when (cancellationTokenSource.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Unable to save ticket {TicketCode}",
+                model.Code);
+
+            errorMessage = "Unable to save the ticket.";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        cancellationTokenSource.Cancel();
+        cancellationTokenSource.Dispose();
+    }
+}

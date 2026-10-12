@@ -1,0 +1,31 @@
+@baseUrl=https://localhost:7142
+
+# Ottenere tutti i ticket
+GET {{baseUrl}}/api/tickets
+Accept: application/json
+
+###
+
+# Ottenere un ticket
+GET {{baseUrl}}/api/tickets/INC-001
+Accept: application/json
+
+###
+
+# Creare un ticket
+POST {{baseUrl}}/api/tickets
+Content-Type: application/json
+Accept: application/json
+
+{
+  "code": "INC-001",
+  "title": "Portale non disponibile",
+  "description": "Gli utenti non riescono ad accedere.",
+  "priority": 1,
+  "affectedService": "Customer Portal"
+}
+
+###
+
+# Cancellare un ticket
+DELETE {{baseUrl}}/api/tickets/INC-001

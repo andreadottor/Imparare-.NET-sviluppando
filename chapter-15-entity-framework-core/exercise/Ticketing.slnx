@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Ticketing.Application/Ticketing.Application.csproj" />
+  <Project Path="Ticketing.ConsoleApp/Ticketing.ConsoleApp.csproj" />
+</Solution>

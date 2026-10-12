@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Ticketing.ConsoleApp": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TICKETING_CONNECTION_STRING": "Server=localhost;Database=Ticketing;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;"
+      }
+    }
+  }
+}

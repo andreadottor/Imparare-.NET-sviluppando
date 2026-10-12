@@ -1,0 +1,65 @@
+@using System.Globalization
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+
+<select @attributes="AdditionalAttributes"
+        class="@FieldCssClass"
+        value="@Value"
+        @onchange="HandleChangeAsync">
+    <option value="1">1 - High</option>
+    <option value="2">2 - Medium</option>
+    <option value="3">3 - Low</option>
+</select>
+
+@code {
+    private FieldIdentifier fieldIdentifier;
+
+    [CascadingParameter]
+    private EditContext? CurrentEditContext { get; set; }
+
+    [Parameter]
+    public int Value { get; set; }
+
+    [Parameter]
+    public EventCallback<int> ValueChanged { get; set; }
+
+    [Parameter]
+    public Expression<Func<int>>? ValueExpression { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object>? AdditionalAttributes
+    {
+        get;
+        set;
+    }
+
+    private string FieldCssClass => CurrentEditContext is null
+        ? "form-select"
+        : $"form-select {CurrentEditContext.FieldCssClass(fieldIdentifier)}";
+
+    protected override void OnParametersSet()
+    {
+        if (ValueExpression is null)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(PrioritySelector)} requires a " +
+                $"{nameof(ValueExpression)} parameter.");
+        }
+
+        fieldIdentifier = FieldIdentifier.Create(ValueExpression);
+    }
+
+    private async Task HandleChangeAsync(ChangeEventArgs eventArgs)
+    {
+        if (!int.TryParse(
+            eventArgs.Value?.ToString(),
+            CultureInfo.InvariantCulture,
+            out int newValue))
+        {
+            return;
+        }
+
+        await ValueChanged.InvokeAsync(newValue);
+        CurrentEditContext?.NotifyFieldChanged(fieldIdentifier);
+    }
+}
