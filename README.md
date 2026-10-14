@@ -21,7 +21,7 @@ Il repository può essere consultato anche senza il libro, ma gli esempi sono pe
 
 Il percorso non vuole essere un manuale esaustivo di ogni tecnologia. L'idea è introdurre gli argomenti quando diventano utili per risolvere un problema concreto e costruire, un passo alla volta, un'applicazione completa.
 
-👉 **Acquista il libro su Amazon:** `[LINK AMAZON - DA INSERIRE]`
+👉 **Acquista il libro su Amazon:** <https://www.amazon.it/dp/B0HN2KXPLR>
 
 ## Come è organizzato il repository
 
@@ -43,9 +43,9 @@ la combinazione RC usata durante la preparazione degli esempi:
 
 | Componente | Versione |
 |---|---|
-| SDK .NET | `11.0.100-rc.1.26425.128` |
-| Package Microsoft ASP.NET Core, EF Core e Dependency Injection | `11.0.0-rc.1.26425.128` |
-| `dotnet-ef` | `11.0.0-rc.1.26425.128` |
+| SDK .NET | `11.0.0-rc.2.26504.105` |
+| Package Microsoft ASP.NET Core, EF Core e Dependency Injection | `11.0.0-rc.2.26504.105` |
+| `dotnet-ef` | `11.0.0-rc.2.26504.105` |
 | Microsoft.Data.SqlClient | `6.1.3` |
 | Dapper | `2.1.72` |
 | Scalar.AspNetCore | `2.1.7` |
