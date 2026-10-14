@@ -77,7 +77,7 @@ public sealed class SqlServerTicketRepositoryTests
         await using var database = new TestDatabase();
         IMigrator migrator = database.Context.GetService<IMigrator>();
         await migrator.MigrateAsync("20261002095315_InitialCreate");
-        await database.Context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO dbo.Tickets (Code, TicketType, Title, Description, Priority, CreatedAt, AffectedService) VALUES ({"INC-LEGACY"}, {"Incident"}, {"Legacy title"}, {"Description"}, {1}, {CreatedAt}, {"Portal"})");
+        await database.Context.Database.ExecuteSqlAsync($"INSERT INTO dbo.Tickets (Code, TicketType, Title, Description, Priority, CreatedAt, AffectedService) VALUES ({"INC-LEGACY"}, {"Incident"}, {"Legacy title"}, {"Description"}, {1}, {CreatedAt}, {"Portal"})");
         await migrator.MigrateAsync();
 
         Ticket? legacy = await database.CreateRepository("EfCore").FindAsync("INC-LEGACY", default);
@@ -90,7 +90,7 @@ public sealed class SqlServerTicketRepositoryTests
 
         DateTimeOffset? closedAt = hasDate ? CreatedAt.AddHours(1) : null;
         SqlException exception = await Assert.ThrowsAsync<SqlException>(() =>
-            database.Context.Database.ExecuteSqlInterpolatedAsync($"UPDATE dbo.Tickets SET Status = {status}, ClosedAt = {closedAt} WHERE Code = {"INC-LEGACY"}"));
+            database.Context.Database.ExecuteSqlAsync($"UPDATE dbo.Tickets SET Status = {status}, ClosedAt = {closedAt} WHERE Code = {"INC-LEGACY"}"));
         Assert.Equal(547, exception.Number);
     }
 
