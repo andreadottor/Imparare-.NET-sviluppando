@@ -2,6 +2,10 @@
 
 > **Da C# ad ASP.NET Core e Blazor, costruendo passo dopo passo un'applicazione web completa**
 
+<a href="https://www.amazon.it/dp/B0HN2KXPLR" style="float:right; margin:10px;">
+    <img src="images/cover_front.jpg" alt="Copertina del libro Imparare .NET sviluppando"  width="200" />
+</a>
+
 Questo repository contiene tutti gli esempi di codice e le esercitazioni svolte del libro **Imparare .NET sviluppando**.
 
 Il libro parte dalle basi di .NET e C# e, capitolo dopo capitolo, fa evolvere una semplice applicazione di ticketing fino ad arrivare a una Web App completa realizzata con ASP.NET Core e Blazor.
@@ -22,6 +26,8 @@ Il repository può essere consultato anche senza il libro, ma gli esempi sono pe
 Il percorso non vuole essere un manuale esaustivo di ogni tecnologia. L'idea è introdurre gli argomenti quando diventano utili per risolvere un problema concreto e costruire, un passo alla volta, un'applicazione completa.
 
 👉 **Acquista il libro su Amazon:** <https://www.amazon.it/dp/B0HN2KXPLR>
+
+<br clear="all" />
 
 ## Come è organizzato il repository
 
