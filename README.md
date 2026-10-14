@@ -2,8 +2,8 @@
 
 > **Da C# ad ASP.NET Core e Blazor, costruendo passo dopo passo un'applicazione web completa**
 
-<a href="https://www.amazon.it/dp/B0HN2KXPLR" style="float:right; margin:10px;">
-    <img src="images/cover_front.jpg" alt="Copertina del libro Imparare .NET sviluppando"  width="200" />
+<a href="https://www.amazon.it/dp/B0HN2KXPLR">
+    <img src="images/cover_front.jpg" alt="Copertina del libro Imparare .NET sviluppando" align="right" width="200" />
 </a>
 
 Questo repository contiene tutti gli esempi di codice e le esercitazioni svolte del libro **Imparare .NET sviluppando**.
