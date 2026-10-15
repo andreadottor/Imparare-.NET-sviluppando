@@ -25,7 +25,7 @@ Il repository può essere consultato anche senza il libro, ma gli esempi sono pe
 
 Il percorso non vuole essere un manuale esaustivo di ogni tecnologia. L'idea è introdurre gli argomenti quando diventano utili per risolvere un problema concreto e costruire, un passo alla volta, un'applicazione completa.
 
-👉 **Acquista il libro su Amazon:** <https://www.amazon.it/dp/B0HN2KXPLR>
+👉 **Acquista il libro su Amazon:** [<https://www.amazon.it/dp/B0HN2KXPLR>](https://link.amazon/B0dByW0wA)
 
 <br clear="all" />
 
